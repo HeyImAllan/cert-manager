@@ -114,4 +114,9 @@ const (
 	// a certificate containing otherName SAN values in the CSR, without
 	// imposing requirements on form or structure.
 	OtherNamesFeature Feature = "OtherNames"
+
+	// ProcessErrorOnHTTPStatus200 enables processing of ACME Problems when the ACME Server returns http status 200 on
+	// an object. This feature gate allows switching of behavior depending on the ACME Server used, as to not cause
+	// breaking changes for existing users.
+	ProcessErrorOnHTTPStatus200 Feature = "ProcessErrorOnHTTPStatus200"
 )

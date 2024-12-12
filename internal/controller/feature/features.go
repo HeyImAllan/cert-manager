@@ -83,6 +83,14 @@ const (
 	// See https://github.com/cert-manager/cert-manager/issues/3203 and https://github.com/cert-manager/cert-manager/issues/4424 for context.
 	LiteralCertificateSubject featuregate.Feature = "LiteralCertificateSubject"
 
+	// Owner; @HeyImAllan
+	// Alpha: v.1.6.3
+	//
+	// ProcessErrorOnHTTPStatus200 enables processing of ACME Problems when the ACME Server returns http status 200 on
+	// an object. This feature gate allows switching of behavior depending on the ACME Server used, as to not cause
+	// breaking changes for existing users.
+	ProcessErrorOnHTTPStatus200 featuregate.Feature = "ProcessErrorOnHTTPStatus200"
+
 	// Owner: @inteon
 	// Alpha: v1.10
 	// Beta: v1.13
@@ -165,6 +173,7 @@ var defaultCertManagerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	AdditionalCertificateOutputFormats:               {Default: true, PreRelease: featuregate.Beta},
 	ServerSideApply:                                  {Default: false, PreRelease: featuregate.Alpha},
 	LiteralCertificateSubject:                        {Default: true, PreRelease: featuregate.Beta},
+	ProcessErrorOnHTTPStatus200:                      {Default: true, PreRelease: featuregate.Alpha},
 	UseCertificateRequestBasicConstraints:            {Default: false, PreRelease: featuregate.Alpha},
 	NameConstraints:                                  {Default: false, PreRelease: featuregate.Alpha},
 	OtherNames:                                       {Default: false, PreRelease: featuregate.Alpha},
