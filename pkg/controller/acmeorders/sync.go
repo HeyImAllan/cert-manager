@@ -184,7 +184,7 @@ func (c *controller) Sync(ctx context.Context, o *cmacme.Order) (err error) {
 	if acmeErr, ok := err.(*acmeapi.Error); ok {
 		if (acmeErr.StatusCode >= 400 && acmeErr.StatusCode < 500) ||
 			(acmeErr.StatusCode == 200 && utilfeature.DefaultFeatureGate.Enabled(feature.ProcessErrorOnHTTPStatus200)) {
-			log.Error(err, "failed to retrieve the ACME order (4xx error) marking Order as failed")
+			log.Error(err, "failed to retrieve the ACME order marking Order as failed")
 			c.setOrderState(&o.Status, string(cmacme.Errored))
 			o.Status.Reason = fmt.Sprintf("Failed to retrieve Order resource: %v", err)
 			return nil

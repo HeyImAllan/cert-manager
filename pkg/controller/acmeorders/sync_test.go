@@ -111,6 +111,26 @@ func TestSync(t *testing.T) {
 		},
 	}
 
+	processingStatus := cmacme.OrderStatus{
+		State:       cmacme.Processing,
+		URL:         "http://testurl.com/abcde",
+		FinalizeURL: "http://testurl.com/abcde/finalize",
+		Authorizations: []cmacme.ACMEAuthorization{
+			{
+				URL:          "http://authzurl",
+				Identifier:   "test.com",
+				InitialState: cmacme.Valid,
+				Challenges: []cmacme.ACMEChallenge{
+					{
+						URL:   "http://chalurl",
+						Token: "token",
+						Type:  "http-01",
+					},
+				},
+			},
+		},
+	}
+
 	erroredStatus := cmacme.OrderStatus{
 		State: cmacme.Errored,
 	}
@@ -143,6 +163,10 @@ func TestSync(t *testing.T) {
 	}
 	acmeError403 := acmeapi.Error{
 		StatusCode: 403,
+		Detail:     "some error",
+	}
+	acmeError200 := acmeapi.Error{
+		StatusCode: 200,
 		Detail:     "some error",
 	}
 
@@ -266,6 +290,12 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
 	}
 
 	testOrderPending := gen.OrderFrom(testOrder, gen.SetOrderStatus(pendingStatus))
+	testOrderProcessing := gen.OrderFrom(testOrder, gen.SetOrderStatus(processingStatus))
+	testOrderErrorWithStatus200 := testOrderProcessing.DeepCopy()
+	testOrderErrorWithStatus200.Status.State = cmacme.Errored
+	testOrderErrorWithStatus200.Status.FailureTime = &nowMetaTime
+	testOrderErrorWithStatus200.Status.Reason = "Failed to finalize Order: 200 : some error"
+
 	testOrderInvalid := testOrderPending.DeepCopy()
 	testOrderInvalid.Status.State = cmacme.Invalid
 	testOrderInvalid.Status.FailureTime = &nowMetaTime
@@ -853,6 +883,7 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
 				},
 			},
 		},
+
 		"should leave the order state as-is if the challenge is marked invalid but the acme order is pending": {
 			order: testOrderPending,
 			builder: &testpkg.Builder{
@@ -884,6 +915,24 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
 				ExpectedActions:    []testpkg.Action{},
 			},
 			acmeClient: &acmecl.FakeACME{},
+		},
+		"process error if the order is invalid but http status is 200": {
+			order: testOrderProcessing,
+			builder: &testpkg.Builder{
+				CertManagerObjects: []runtime.Object{testIssuerHTTP01TestCom, testOrderProcessing, testAuthorizationChallengeValid},
+				ExpectedActions: []testpkg.Action{testpkg.NewAction(coretesting.NewUpdateSubresourceAction(cmacme.SchemeGroupVersion.WithResource("orders"),
+					"status",
+					testOrderErrorWithStatus200.Namespace, testOrderErrorWithStatus200))},
+			},
+			acmeClient: &acmecl.FakeACME{
+				FakeGetOrder: func(_ context.Context, url string) (*acmeapi.Order, error) {
+					return testACMEOrderInvalid, &acmeError200
+				},
+				FakeHTTP01ChallengeResponse: func(s string) (string, error) {
+					// TODO: assert s = "token"
+					return "key", nil
+				},
+			},
 		},
 		"do nothing if the order is in errored state with no url or finalize url on status": {
 			order: testOrderErrored,
