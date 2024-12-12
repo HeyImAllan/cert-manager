@@ -111,26 +111,6 @@ func TestSync(t *testing.T) {
 		},
 	}
 
-	processingStatus := cmacme.OrderStatus{
-		State:       cmacme.Processing,
-		URL:         "http://testurl.com/abcde",
-		FinalizeURL: "http://testurl.com/abcde/finalize",
-		Authorizations: []cmacme.ACMEAuthorization{
-			{
-				URL:          "http://authzurl",
-				Identifier:   "test.com",
-				InitialState: cmacme.Valid,
-				Challenges: []cmacme.ACMEChallenge{
-					{
-						URL:   "http://chalurl",
-						Token: "token",
-						Type:  "http-01",
-					},
-				},
-			},
-		},
-	}
-
 	erroredStatus := cmacme.OrderStatus{
 		State: cmacme.Errored,
 	}
@@ -290,11 +270,12 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
 	}
 
 	testOrderPending := gen.OrderFrom(testOrder, gen.SetOrderStatus(pendingStatus))
-	testOrderProcessing := gen.OrderFrom(testOrder, gen.SetOrderStatus(processingStatus))
+	testOrderProcessing := testOrderPending.DeepCopy()
+	testOrderProcessing.Status.State = cmacme.Processing
 	testOrderErrorWithStatus200 := testOrderProcessing.DeepCopy()
 	testOrderErrorWithStatus200.Status.State = cmacme.Errored
 	testOrderErrorWithStatus200.Status.FailureTime = &nowMetaTime
-	testOrderErrorWithStatus200.Status.Reason = "Failed to finalize Order: 200 : some error"
+	testOrderErrorWithStatus200.Status.Reason = "Failed to retrieve Order resource: 200 : some error"
 
 	testOrderInvalid := testOrderPending.DeepCopy()
 	testOrderInvalid.Status.State = cmacme.Invalid
